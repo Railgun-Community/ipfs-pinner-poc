@@ -132,11 +132,16 @@ async function readJsonLines (response: Response, onPayload: (payload: unknown) 
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    buffer = consumeJsonLines(buffer, onPayload)
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      buffer = consumeJsonLines(buffer, onPayload)
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => undefined)
+    throw error
   }
   buffer += decoder.decode()
   const remainder = buffer.trim()
