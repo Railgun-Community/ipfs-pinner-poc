@@ -1,0 +1,29 @@
+{
+  "name": "@railgun-reloaded/ipfs-pinner",
+  "version": "0.0.0",
+  "description": "Availability daemon that keeps RAILGUN IPFS content pinned on a Kubo node",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "pretest": "npm run build",
+    "test": "node --test 'test/**/*.test.js'",
+    "start": "node --env-file-if-exists=.env bin/pinner.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "multiformats": "^14.0.0"
+  },
+  "devDependencies": {
+    "@railgun-reloaded/eslint-config": "^1.1.0",
+    "@railgun-reloaded/tsconfig": "^1.2.0",
+    "@types/node": "^24.7.2",
+    "typescript": "^5.9.3"
+  },
+  "bin": {
+    "ipfs-pinner": "bin/pinner.js"
+  }
+}

@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+data/
+
+# TypeScript build outputs are emitted in-tree for local test runs.
+src/**/*.js
+test/**/*.js
+bin/**/*.js
+*.tsbuildinfo
+docs

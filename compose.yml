@@ -1,0 +1,31 @@
+services:
+  ipfs:
+    image: ipfs/kubo:latest
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+      - "127.0.0.1:5001:5001"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data/ipfs:/data/ipfs
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ipfs-pinner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: railgun-reloaded/ipfs-pinner:local
+    restart: unless-stopped
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    environment:
+      KUBO_API_URL: http://ipfs:5001
+      PIN_FETCH_TIMEOUT_MS: "${PIN_FETCH_TIMEOUT_MS:-120000}"
+      RECONCILE_INTERVAL_MS: "${RECONCILE_INTERVAL_MS:-600000}"
+      RPC_URL_MAINNET: "${RPC_URL_MAINNET:-}"
+      RPC_URL_SEPOLIA: "${RPC_URL_SEPOLIA:-}"
