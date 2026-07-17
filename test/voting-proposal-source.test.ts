@@ -4,6 +4,7 @@ import { afterEach, test } from 'node:test'
 import type { EthCallRequest, EthGetLogsChunkedOptions, EthLog } from '../src/eth-rpc.js'
 import { logger } from '../src/logger.js'
 import {
+  DEFAULT_GOVERNANCE_PROPOSAL_MAX_DAG_SIZE_BYTES,
   VOTING_PROPOSAL_TOPIC,
   VotingProposalSource,
   decodeProposalDocument,
@@ -131,6 +132,7 @@ test('collect formats voting proposal pin names from chain and proposal id', asy
   assert.equal(entries.length, 1)
   assert.equal(entries[0]?.cid.toString(), VALID_CID)
   assert.equal(entries[0]?.name, 'railgun/1/gov-proposal/24')
+  assert.equal(entries[0]?.maxDagSizeBytes, DEFAULT_GOVERNANCE_PROPOSAL_MAX_DAG_SIZE_BYTES)
   assert.equal(fetchOptions?.address, CONTRACT_ADDRESS)
   assert.deepEqual(fetchOptions?.topics, [VOTING_PROPOSAL_TOPIC])
   assert.equal(fetchOptions?.fromBlock, 15505853n)

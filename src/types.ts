@@ -4,6 +4,7 @@ import type { CID } from 'multiformats/cid'
 type PinEntry = {
   cid: CID
   name: string
+  maxDagSizeBytes?: number
 }
 
 /** Anything that can produce pin entries. Sources never talk to the Kubo node. */

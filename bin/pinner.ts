@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { KuboClient } from '../src/kubo.js'
+import { DagSizeLimitExceededError, KuboClient } from '../src/kubo.js'
 import { logger } from '../src/logger.js'
 import { diffPinsets, mergeSources } from '../src/reconcile.js'
 import { StaticListSource } from '../src/static-list.js'
@@ -57,25 +57,40 @@ const abortableSleep = async (ms: number, signal: AbortSignal): Promise<void> =>
  * @param sources - Pin sources to collect from.
  * @param kubo - Kubo client to diff against and pin through.
  * @param pinFetchTimeoutMs - Per-pin fetch timeout in milliseconds.
+ * @param rejectedCids - Oversize CIDs rejected during this daemon process.
  */
 const runCycle = async (
   sources: PinSource[],
   kubo: KuboClient,
-  pinFetchTimeoutMs: number
+  pinFetchTimeoutMs: number,
+  rejectedCids: Set<string>
 ): Promise<void> => {
   const collected = await Promise.all(sources.map(async source => source.collect()))
   const desired = mergeSources(collected)
 
   const actual = await kubo.listPins()
   const missing = diffPinsets(desired, actual)
+  const pinCandidates = missing.filter(entry => !rejectedCids.has(entry.cid.toString()))
 
   let pinned = 0
   let failed = 0
-  for (const entry of missing) {
+  let rejected = 0
+  for (const entry of pinCandidates) {
     try {
-      await kubo.addPin(entry.cid.toString(), entry.name, pinFetchTimeoutMs)
+      await kubo.addPin(entry.cid.toString(), entry.name, pinFetchTimeoutMs, entry.maxDagSizeBytes)
       pinned++
     } catch (error) {
+      if (error instanceof DagSizeLimitExceededError) {
+        rejected++
+        rejectedCids.add(entry.cid.toString())
+        logger.warn('pin rejected over size cap', {
+          cid: entry.cid.toString(),
+          name: entry.name,
+          maxSizeBytes: error.maxSizeBytes,
+          actualSizeBytes: error.actualSizeBytes
+        })
+        continue
+      }
       failed++
       logger.error('pin failed, will retry next cycle', {
         cid: entry.cid.toString(),
@@ -88,7 +103,9 @@ const runCycle = async (
   logger.info('reconcile cycle complete', {
     collected: desired.length,
     pinned,
-    failed
+    failed,
+    rejected,
+    skippedRejected: missing.length - pinCandidates.length
   })
 }
 
@@ -129,6 +146,7 @@ const main = async (): Promise<void> => {
   logger.info('ipfs-pinner starting', { apiURL, pinFetchTimeoutMs, intervalMs, sourceCount: sources.length })
 
   const controller = new AbortController()
+  const rejectedCids = new Set<string>()
   const shutdown = (): void => {
     logger.info('shutdown signal received')
     controller.abort()
@@ -138,7 +156,7 @@ const main = async (): Promise<void> => {
 
   while (!controller.signal.aborted) {
     try {
-      await runCycle(sources, kubo, pinFetchTimeoutMs)
+      await runCycle(sources, kubo, pinFetchTimeoutMs, rejectedCids)
     } catch (error) {
       logger.error('reconcile cycle failed', { error: error instanceof Error ? error.message : String(error) })
     }

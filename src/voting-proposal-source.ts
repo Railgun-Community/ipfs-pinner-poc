@@ -17,12 +17,14 @@ const ADDRESS_PADDING_HEX_LENGTH = ABI_WORD_HEX_LENGTH - ADDRESS_HEX_LENGTH
 const PROPOSAL_GETTER_HEAD_WORDS = 10
 const PROPOSAL_DOCUMENT_OFFSET_WORD_BYTE_OFFSET = ABI_WORD_BYTES * 2
 const MAX_UINT256 = (1n << 256n) - 1n
+const DEFAULT_GOVERNANCE_PROPOSAL_MAX_DAG_SIZE_BYTES = 1_000_000
 
 type VotingProposalSourceConfig = {
   chainId: number
   rpcURL: string | undefined
   contractAddress: string
   deploymentBlock: bigint
+  maxDagSizeBytes?: number
 }
 
 type VotingProposalLogFetcher = (options: EthGetLogsChunkedOptions) => Promise<EthLog[]>
@@ -43,6 +45,7 @@ class VotingProposalSource implements PinSource {
   #rpcURL: string | undefined
   #contractAddress: string
   #deploymentBlock: bigint
+  #maxDagSizeBytes: number
   #fetchLogs: VotingProposalLogFetcher | undefined
   #call: VotingProposalCallFetcher | undefined
 
@@ -51,6 +54,7 @@ class VotingProposalSource implements PinSource {
     this.#rpcURL = config.rpcURL?.trim()
     this.#contractAddress = config.contractAddress
     this.#deploymentBlock = config.deploymentBlock
+    this.#maxDagSizeBytes = config.maxDagSizeBytes ?? DEFAULT_GOVERNANCE_PROPOSAL_MAX_DAG_SIZE_BYTES
     this.#fetchLogs = dependencies.fetchLogs
     this.#call = dependencies.call
   }
@@ -110,7 +114,8 @@ class VotingProposalSource implements PinSource {
 
       entries.push({
         cid,
-        name: `railgun/${this.#chainId.toString()}/gov-proposal/${decodedLog.id.toString()}`
+        name: `railgun/${this.#chainId.toString()}/gov-proposal/${decodedLog.id.toString()}`,
+        maxDagSizeBytes: this.#maxDagSizeBytes
       })
     }
 
@@ -242,6 +247,7 @@ function hexToBytes (hex: string): Uint8Array {
 }
 
 export {
+  DEFAULT_GOVERNANCE_PROPOSAL_MAX_DAG_SIZE_BYTES,
   PROPOSALS_SELECTOR,
   VOTING_PROPOSAL_TOPIC,
   VotingProposalSource,

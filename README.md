@@ -13,8 +13,9 @@ that:
    contract, verifying-key contracts for supported chains, plus a checked-in
    artifacts JSON — and merges their CIDs into one desired pinset,
 2. diffs the desired pinset against the Kubo node's actual pins,
-3. pins the missing entries with a per-pin fetch timeout and deterministic
-   names, and
+3. gates governance proposal documents behind a 1 MB recursive DAG size
+   budget, then pins missing entries with a per-pin fetch timeout and
+   deterministic names, and
 4. loops on a timer; add-only, never unpins; failed pins retry next cycle.
 
 
@@ -73,7 +74,9 @@ Everything else is code, not config: the source list (contract addresses,
 deployment blocks, chain IDs) is hard-coded, and the static
 ceremony/artifacts list (`src/static-list.json`) is checked into the repo —
 adding content to pin is a PR. No secrets required: read-only RPC access
-plus a local Kubo admin API.
+plus a local Kubo admin API. Governance proposal document DAGs are capped at
+`1000000` bytes in code before `pin/add`; oversize CIDs are rejected and
+skipped for the rest of the process.
 
 ## Docs
 
