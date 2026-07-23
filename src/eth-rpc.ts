@@ -1,3 +1,5 @@
+import { logger } from './logger.js'
+
 const DEFAULT_GET_LOGS_CHUNK_SIZE = 5_000n
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -85,11 +87,22 @@ class EthRpcClient {
     const latestBlock = options.toBlock ?? await this.getBlockNumber()
     if (latestBlock < options.fromBlock) return []
 
+    const totalChunks = ((latestBlock - options.fromBlock) / chunkSize) + 1n
+    let chunkIndex = 0n
+
     const logs: EthLog[] = []
     let fromBlock = options.fromBlock
     while (fromBlock <= latestBlock) {
       const chunkEndCandidate = fromBlock + chunkSize - 1n
       const toBlock = chunkEndCandidate < latestBlock ? chunkEndCandidate : latestBlock
+      chunkIndex++
+      logger.info('eth_getLogs chunk', {
+        address: options.address,
+        fromBlock,
+        toBlock,
+        chunk: chunkIndex,
+        totalChunks
+      })
       logs.push(...await this.getLogs({
         address: options.address,
         topics: options.topics,

@@ -9,8 +9,6 @@
     "clean": "tsc --build --clean",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "demo:product": "npm run build && node bin/demo-product.js",
-    "demo:size-gate": "npm run build && node bin/demo-size-gate.js",
     "pretest": "npm run build",
     "test": "node --test 'test/**/*.test.js'",
     "start": "node --env-file-if-exists=.env bin/pinner.js"

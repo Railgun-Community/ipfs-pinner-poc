@@ -58,30 +58,6 @@ pulled forward from the post-MVP backlog (D7 originally deferred it) so
 the daemon could be smoke-tested against a real Kubo node instead of a
 mock; see `docs/decisions.md` D12.
 
-## Demo: product flow
-
-To pitch the intended product without relying on a live Kubo node, chain RPC,
-or the public IPFS network:
-
-```bash
-npm run demo:product
-```
-
-The script runs the real source modules, reconciler, and `KuboClient` against
-deterministic local mocks. It shows the full story:
-
-- collect desired pins from the repo static list, verifying-key events, and
-  governance proposals;
-- diff against Kubo's current recursive pins;
-- pin missing content with deterministic names;
-- reject an oversized permissionless proposal DAG before `pin/add`.
-
-For just the low-level proposal size gate proof, run:
-
-```bash
-npm run demo:size-gate
-```
-
 ## Configuration (flat env, single process)
 
 - `KUBO_API_URL`: Kubo RPC API base URL (e.g. `http://127.0.0.1:5001`).
